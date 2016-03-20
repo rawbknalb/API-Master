@@ -12,13 +12,36 @@ use App\User;
 class JokesController extends Controller
 {
 
- public function index(){
-   $jokes = Joke::with(
-   array('User'=>function($query){
-     $query->select('id','name');
-     })
-   )->select('id', 'body', 'user_id')->paginate(5);
+ public function index(Request $request){
 
+   $search_term = $request->input('search');
+   $limit = $request->input('limit')?$request->input('limit'):5;
+
+   if ($search_term){
+     $jokes = Joke::orderBy('id', 'DESC')->where(
+     'body', 'LIKE', "%$search_term%")->with(
+     array('User'=>function($query){
+       $query->select('id', 'name');
+       })
+       )->select('id', 'body', 'user_id')->paginate($limit);
+
+       $jokes->appends(array(
+         'search' => $search_term,
+         'limit' => $limit
+       ));
+     }
+
+    else{
+      $jokes = Joke::orderBy('id', 'DESC')->with(
+      array('User'=>function($query){
+        $query->select('id', 'name');
+      })
+      )->select('id', 'body', 'user_id')->paginate($limit);
+
+       $jokes->appends(array(
+         'limit' => $limit
+       ));
+     }
 
    return response()->json($this->transformCollection($jokes), 200);
  }
