@@ -7,6 +7,7 @@ use Illuminate\Http\Response;
 
 use App\Http\Requests;
 use App\Joke;
+use App\User;
 
 class JokesController extends Controller
 {
@@ -19,7 +20,11 @@ class JokesController extends Controller
  }
 
 public function show($id){
-  $joke = Joke::find($id);
+  $joke = Joke::with(
+  array('User'=>function($query){
+    $query->select('id', 'name');
+    })
+  )->find($id);
 
   if(!$joke){
     return response()->json([
@@ -28,7 +33,16 @@ public function show($id){
       ]
     ], 404);
   }
+
+  // get previous joke id
+  $previous = Joke::where('id', '<', $joke->id)->max('id');
+
+  //get next joke id
+  $next = Joke::where('id', '>', $joke->id)->min('id');
+
   return response()->json([
+    'previous_joke_id' => $previous,
+    'next_joke_id' =>$next,
     'jokes_data' => $this->transform($joke)
   ], 200);
 }
@@ -40,7 +54,8 @@ public function transformCollection($jokes){
 public function transform($joke){
   return [
     'joke_id' => $joke['id'],
-    'joke' => $joke['body']
+    'joke' => $joke['body'],
+    'submitted_by' => $joke['user']['name']
   ];
 }
 
