@@ -14,6 +14,7 @@ class JokesController extends Controller
  public function index(){
    $jokes = Joke::all(); //Not a good idea
    return response()->json([
+     'jokes_data' =>  $this->transformCollection($jokes)
    ], 200);
  }
 
@@ -28,6 +29,7 @@ public function show($id){
     ], 404);
   }
   return response()->json([
+    'jokes_data' => $this->transform($joke)
   ], 200);
 }
 
